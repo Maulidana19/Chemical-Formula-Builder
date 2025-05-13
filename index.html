@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemical Formula Builder Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .instructions {
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 5px 5px 0;
+        }
+        .formula-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .ion-option {
+            background-color: #f0f0f0;
+            border: 2px solid #d9d9d9;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .ion-option:hover {
+            background-color: #e6f7ff;
+            border-color: #1890ff;
+        }
+        .ion-option.selected {
+            background-color: #1890ff;
+            color: white;
+            border-color: #0076e4;
+        }
+        .workspace {
+            min-height: 50px;
+            background-color: #fafafa;
+            border: 2px dashed #d9d9d9;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .workspace-ion {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 5px;
+            padding: 5px 10px;
+            margin-right: 5px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0076e4;
+        }
+        button:disabled {
+            background-color: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .correct {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .incorrect {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #1890ff;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .score-display {
+            text-align: right;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .level-indicator {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fffbe6;
+            border-left: 4px solid #faad14;
+            border-radius: 0 5px 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Chemical Formula Builder</h1>
+        
+        <div class="instructions" id="instructions">
+            <h2>How to Play</h2>
+            <p>In this game, you will build chemical formulas from their constituent ions!</p>
+            <p>1. You'll be shown a chemical formula to build</p>
+            <p>2. Select the correct ions that make up the compound</p>
+            <p>3. Be careful! Not all ions shown are part of the compound</p>
+            <p>4. Submit your answer to check if you're correct</p>
+            <button id="start-game">Start Game</button>
+        </div>
+
+        <div id="game-screen" style="display: none;">
+            <div class="level-indicator">Level: <span id="level">1</span></div>
+            <div class="score-display">Score: <span id="score">0</span></div>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+            
+            <div class="formula-display">
+                Build this compound: <span id="target-formula">H₂SO₄</span>
+            </div>
+            
+            <p>Select the correct ions that make up this compound:</p>
+            
+            <div class="options-container" id="options-container">
+                <!-- Ion options will be generated here -->
+            </div>
+            
+            <p>Your selection:</p>
+            <div class="workspace" id="workspace">
+                <!-- Selected ions will appear here -->
+            </div>
+            
+            <button id="submit-btn">Submit Answer</button>
+            <button id="clear-btn">Clear Selection</button>
+            
+            <div class="feedback" id="feedback" style="display: none;"></div>
+            
+            <div class="explanation" id="explanation" style="display: none;">
+                <!-- Explanation will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="level-complete-modal" class="modal">
+        <div class="modal-content">
+            <h2>Level Complete!</h2>
+            <p>Great job! You've completed level <span id="completed-level">1</span>.</p>
+            <p>Your current score: <span id="current-score">0</span></p>
+            <button id="next-level-btn">Next Level</button>
+        </div>
+    </div>
+
+    <div id="game-complete-modal" class="modal">
+        <div class="modal-content">
+            <h2>Congratulations!</h2>
+            <p>You've completed all levels of the Chemical Formula Builder game!</p>
+            <p>Final score: <span id="final-score">0</span></p>
+            <button id="restart-game-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game data
+            const levels = [
+                {
+                    formula: "H₂O",
+                    correctIons: ["H⁺", "O²⁻"],
+                    distractors: ["OH⁻", "Na⁺", "Cl⁻"],
+                    explanation: "Water (H₂O) is formed from hydrogen ions (H⁺) and oxide ions (O²⁻). The charges must balance: 2(+1) + (-2) = 0."
+                },
+                {
+                    formula: "NaCl",
+                    correctIons: ["Na⁺", "Cl⁻"],
+                    distractors: ["K⁺", "O²⁻", "SO₄²⁻"],
+                    explanation: "Sodium chloride (NaCl) is formed from sodium ions (Na⁺) and chloride ions (Cl⁻). The charges balance: (+1) + (-1) = 0."
+                },
+                {
+                    formula: "H₂SO₄",
+                    correctIons: ["H⁺", "SO₄²⁻"],
+                    distractors: ["S²⁻", "O²⁻", "OH⁻", "Na⁺"],
+                    explanation: "Sulfuric acid (H₂SO₄) is formed from hydrogen ions (H⁺) and sulfate ions (SO₄²⁻). Two hydrogen ions balance the -2 charge of sulfate: 2(+1) + (-2) = 0."
+                },
+                {
+                    formula: "Al₂O₃",
+                    correctIons: ["Al³⁺", "O²⁻"],
+                    distractors: ["Al⁺", "O⁻", "Na⁺", "S²⁻", "I⁻"],
+                    explanation: "Aluminum oxide (Al₂O₃) is formed from aluminum ions (Al³⁺) and oxide ions (O²⁻). The charges balance: 2(+3) + 3(-2) = 0."
+                },
+                {
+                    formula: "Ca(OH)₂",
+                    correctIons: ["Ca²⁺", "OH⁻"],
+                    distractors: ["Ca⁺", "O²⁻", "H⁺", "Cl⁻"],
+                    explanation: "Calcium hydroxide (Ca(OH)₂) contains calcium ions (Ca²⁺) and hydroxide ions (OH⁻). The charges balance: (+2) + 2(-1) = 0."
+                },
+                {
+                    formula: "NH₄NO₃",
+                    correctIons: ["NH₄⁺", "NO₃⁻"],
+                    distractors: ["N³⁻", "H⁺", "O²⁻", "Na⁺", "NO₂⁻"],
+                    explanation: "Ammonium nitrate (NH₄NO₃) contains ammonium ions (NH₄⁺) and nitrate ions (NO₃⁻). The charges balance: (+1) + (-1) = 0."
+                },
+                {
+                    formula: "Fe₂(SO₄)₃",
+                    correctIons: ["Fe³⁺", "SO₄²⁻"],
+                    distractors: ["Fe²⁺", "S²⁻", "O²⁻", "FeO²⁻", "SO₃²⁻"],
+                    explanation: "Iron(III) sulfate (Fe₂(SO₄)₃) contains iron(III) ions (Fe³⁺) and sulfate ions (SO₄²⁻). The charges balance: 2(+3) + 3(-2) = 0."
+                },
+                {
+                    formula: "Cu(NO₃)₂",
+                    correctIons: ["Cu²⁺", "NO₃⁻"],
+                    distractors: ["Cu⁺", "N³⁻", "O²⁻", "NO₂⁻", "Cu³⁺"],
+                    explanation: "Copper(II) nitrate (Cu(NO₃)₂) contains copper(II) ions (Cu²⁺) and nitrate ions (NO₃⁻). The charges balance: (+2) + 2(-1) = 0."
+                },
+                {
+                    formula: "Mg₃(PO₄)₂",
+                    correctIons: ["Mg²⁺", "PO₄³⁻"],
+                    distractors: ["Mg⁺", "P³⁻", "O²⁻", "P₂O₅⁴⁻", "PO₃³⁻"],
+                    explanation: "Magnesium phosphate (Mg₃(PO₄)₂) contains magnesium ions (Mg²⁺) and phosphate ions (PO₄³⁻). The charges balance: 3(+2) + 2(-3) = 0."
+                },
+                {
+                    formula: "Al₂(SO₄)₃",
+                    correctIons: ["Al³⁺", "SO₄²⁻"],
+                    distractors: ["Al⁺", "S²⁻", "O²⁻", "SO₃²⁻", "Al²⁺"],
+                    explanation: "Aluminum sulfate (Al₂(SO₄)₃) contains aluminum ions (Al³⁺) and sulfate ions (SO₄²⁻). The charges balance: 2(+3) + 3(-2) = 0."
+                }
+            ];
+
+            // Game variables
+            let currentLevel = 0;
+            let score = 0;
+            let selectedIons = [];
+            
+            // DOM elements
+            const instructionsDiv = document.getElementById('instructions');
+            const gameScreen = document.getElementById('game-screen');
+            const startGameBtn = document.getElementById('start-game');
+            const targetFormulaEl = document.getElementById('target-formula');
+            const optionsContainerEl = document.getElementById('options-container');
+            const workspaceEl = document.getElementById('workspace');
+            const submitBtn = document.getElementById('submit-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const feedbackEl = document.getElementById('feedback');
+            const explanationEl = document.getElementById('explanation');
+            const progressFillEl = document.getElementById('progress-fill');
+            const scoreEl = document.getElementById('score');
+            const levelEl = document.getElementById('level');
+            
+            const levelCompleteModal = document.getElementById('level-complete-modal');
+            const completedLevelEl = document.getElementById('completed-level');
+            const currentScoreEl = document.getElementById('current-score');
+            const nextLevelBtn = document.getElementById('next-level-btn');
+            
+            const gameCompleteModal = document.getElementById('game-complete-modal');
+            const finalScoreEl = document.getElementById('final-score');
+            const restartGameBtn = document.getElementById('restart-game-btn');
+            
+            // Event listeners
+            startGameBtn.addEventListener('click', startGame);
+            submitBtn.addEventListener('click', checkAnswer);
+            clearBtn.addEventListener('click', clearSelection);
+            nextLevelBtn.addEventListener('click', loadNextLevel);
+            restartGameBtn.addEventListener('click', restartGame);
+            
+            // Start game function
+            function startGame() {
+                instructionsDiv.style.display = 'none';
+                gameScreen.style.display = 'block';
+                loadLevel(currentLevel);
+            }
+            
+            // Load level function
+            function loadLevel(levelIndex) {
+                if (levelIndex >= levels.length) {
+                    endGame();
+                    return;
+                }
+                
+                const level = levels[levelIndex];
+                
+                // Update display
+                targetFormulaEl.textContent = level.formula;
+                levelEl.textContent = levelIndex + 1;
+                
+                // Update progress bar
+                const progressPercentage = (levelIndex / levels.length) * 100;
+                progressFillEl.style.width = `${progressPercentage}%`;
+                
+                // Clear selections
+                selectedIons = [];
+                updateWorkspace();
+                
+                // Generate ion options
+                generateIonOptions(level);
+                
+                // Hide feedback and explanation
+                feedbackEl.style.display = 'none';
+                explanationEl.style.display = 'none';
+            }
+            
+            // Generate ion options function
+            function generateIonOptions(level) {
+                // Clear options container
+                optionsContainerEl.innerHTML = '';
+                
+                // Combine correct ions and distractors
+                const allIons = [...level.correctIons, ...level.distractors];
+                
+                // Shuffle the ions
+                shuffleArray(allIons);
+                
+                // Create option elements
+                allIons.forEach(ion => {
+                    const ionOption = document.createElement('div');
+                    ionOption.className = 'ion-option';
+                    ionOption.textContent = ion;
+                    ionOption.addEventListener('click', () => toggleIonSelection(ion, ionOption));
+                    optionsContainerEl.appendChild(ionOption);
+                });
+            }
+            
+            // Toggle ion selection
+            function toggleIonSelection(ion, ionOptionEl) {
+                const index = selectedIons.indexOf(ion);
+                
+                if (index === -1) {
+                    // Add ion to selection
+                    selectedIons.push(ion);
+                    ionOptionEl.classList.add('selected');
+                } else {
+                    // Remove ion from selection
+                    selectedIons.splice(index, 1);
+                    ionOptionEl.classList.remove('selected');
+                }
+                
+                updateWorkspace();
+            }
+            
+            // Update workspace
+            function updateWorkspace() {
+                workspaceEl.innerHTML = '';
+                
+                if (selectedIons.length === 0) {
+                    workspaceEl.innerHTML = '<em>No ions selected yet</em>';
+                    return;
+                }
+                
+                selectedIons.forEach(ion => {
+                    const ionEl = document.createElement('div');
+                    ionEl.className = 'workspace-ion';
+                    ionEl.textContent = ion;
+                    workspaceEl.appendChild(ionEl);
+                });
+            }
+            
+            // Check answer
+            function checkAnswer() {
+                const level = levels[currentLevel];
+                const correctIons = level.correctIons;
+                
+                // Sort both arrays for comparison
+                const sortedSelected = [...selectedIons].sort();
+                const sortedCorrect = [...correctIons].sort();
+                
+                const isCorrect = arraysEqual(sortedSelected, sortedCorrect);
+                
+                // Show feedback
+                feedbackEl.style.display = 'block';
+                
+                if (isCorrect) {
+                    feedbackEl.className = 'feedback correct';
+                    feedbackEl.textContent = 'Correct! Great job!';
+                    score += 10;
+                    scoreEl.textContent = score;
+                    
+                    // Show explanation
+                    explanationEl.style.display = 'block';
+                    explanationEl.innerHTML = `<strong>Explanation:</strong> ${level.explanation}`;
+                    
+                    // Show level complete modal after a delay
+                    setTimeout(() => {
+                        completedLevelEl.textContent = currentLevel + 1;
+                        currentScoreEl.textContent = score;
+                        levelCompleteModal.style.display = 'block';
+                    }, 1500);
+                } else {
+                    feedbackEl.className = 'feedback incorrect';
+                    feedbackEl.textContent = 'Incorrect. Try again!';
+                    
+                    if (score > 0) {
+                        score -= 2;
+                        scoreEl.textContent = score;
+                    }
+                }
+            }
+            
+            // Load next level
+            function loadNextLevel() {
+                currentLevel++;
+                levelCompleteModal.style.display = 'none';
+                loadLevel(currentLevel);
+            }
+            
+            // Clear selection
+            function clearSelection() {
+                selectedIons = [];
+                const ionOptions = document.querySelectorAll('.ion-option');
+                ionOptions.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                updateWorkspace();
+            }
+            
+            // End game
+            function endGame() {
+                finalScoreEl.textContent = score;
+                gameCompleteModal.style.display = 'block';
+            }
+            
+            // Restart game
+            function restartGame() {
+                currentLevel = 0;
+                score = 0;
+                scoreEl.textContent = score;
+                gameCompleteModal.style.display = 'none';
+                loadLevel(currentLevel);
+            }
+            
+            // Utility functions
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+            
+            function arraysEqual(a, b) {
+                if (a.length !== b.length) return false;
+                return a.every((val, index) => val === b[index]);
+            }
+            
+            // Window click event to close modals
+            window.onclick = function(event) {
+                if (event.target === levelCompleteModal) {
+                    levelCompleteModal.style.display = 'none';
+                }
+                if (event.target === gameCompleteModal) {
+                    gameCompleteModal.style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
